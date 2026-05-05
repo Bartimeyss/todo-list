@@ -61,6 +61,122 @@ class Component {
     }
 }
 
+class AddTask extends Component {
+    constructor(onAddTask) {
+        super();
+
+        this.onAddTask = onAddTask;
+        this.state = {
+            inputValue: "",
+        };
+
+        this.onAddInputChange = this.onAddInputChange.bind(this);
+        this.onSubmit = this.onSubmit.bind(this);
+    }
+
+    onAddInputChange(e) {
+        this.state.inputValue = e.target.value;
+    }
+
+    onSubmit() {
+        if (!this.state.inputValue.trim()) return;
+
+        this.onAddTask(this.state.inputValue);
+        this.setState({
+            inputValue: "",
+        });
+    }
+
+    render() {
+        return createElement("div", { class: "add-todo" }, [
+            createElement(
+                "input",
+                {
+                    id: "new-todo",
+                    type: "text",
+                    placeholder: "Задание",
+                    value: this.state.inputValue,
+                },
+                null,
+                {
+                    input: this.onAddInputChange,
+                }
+            ),
+
+            createElement(
+                "button",
+                { id: "add-btn" },
+                "+",
+                { click: this.onSubmit }
+            ),
+        ]);
+    }
+}
+
+class Task extends Component {
+    constructor(todo, onDeleteTask, onToggleTask) {
+        super();
+
+        this.todo = todo;
+        this.onDeleteTask = onDeleteTask;
+        this.onToggleTask = onToggleTask;
+        this.state = {
+            isDeleteConfirming: false,
+        };
+
+        this.onDeleteClick = this.onDeleteClick.bind(this);
+        this.onDoneChange = this.onDoneChange.bind(this);
+    }
+
+    onDeleteClick() {
+        if (this.state.isDeleteConfirming) {
+            this.onDeleteTask(this.todo.id);
+            return;
+        }
+
+        this.setState({
+            isDeleteConfirming: true,
+        });
+    }
+
+    onDoneChange() {
+        this.onToggleTask(this.todo.id);
+    }
+
+    render() {
+        return createElement("li", { "data-id": this.todo.id }, [
+            createElement(
+                "input",
+                {
+                    type: "checkbox",
+                    checked: this.todo.done,
+                },
+                null,
+                {
+                    change: this.onDoneChange,
+                }
+            ),
+            createElement(
+                "label",
+                {
+                    class: this.todo.done ? "done" : "",
+                },
+                this.todo.text
+            ),
+            createElement(
+                "button",
+                {
+                    class: this.state.isDeleteConfirming
+                        ? "delete-confirming"
+                        : "",
+                },
+                "🗑️",
+                { click: this.onDeleteClick }
+            ),
+        ]);
+    }
+}
+
 class TodoList extends Component {
     constructor() {
         super();
@@ -70,32 +186,25 @@ class TodoList extends Component {
                 { id: 1, text: "Сделать домашку", done: false },
                 { id: 2, text: "Сделать практику", done: false },
             ],
-            inputValue: "",
         };
 
         this.onAddTask = this.onAddTask.bind(this);
-        this.onAddInputChange = this.onAddInputChange.bind(this);
+        this.onDeleteTask = this.onDeleteTask.bind(this);
+        this.onToggleTask = this.onToggleTask.bind(this);
     }
 
-    onAddInputChange(e) {
-        this.setState({
-            inputValue: e.target.value,
-        });
-    }
-
-    onAddTask() {
-        if (!this.state.inputValue.trim()) return;
+    onAddTask(text) {
         const newTodo = {
             id: Date.now(),
-            text: this.state.inputValue,
+            text,
             done: false,
         };
 
         this.setState({
             todos: [...this.state.todos, newTodo],
-            inputValue: "",
         });
     }
+
     onDeleteTask(id) {
         const updatedTodos = this.state.todos.filter(
             (todo) => todo.id !== id
@@ -104,43 +213,33 @@ class TodoList extends Component {
         this.setState({ todos: updatedTodos });
     }
 
+    onToggleTask(id) {
+        const updatedTodos = this.state.todos.map((todo) => {
+            if (todo.id !== id) return todo;
+
+            return {
+                ...todo,
+                done: !todo.done,
+            };
+        });
+
+        this.setState({ todos: updatedTodos });
+    }
+
     render() {
         return createElement("div", { class: "todo-list" }, [
             createElement("h1", {}, "TODO List"),
-            createElement("div", { class: "add-todo" }, [
-                createElement(
-                    "input",
-                    {
-                        id: "new-todo",
-                        type: "text",
-                        placeholder: "Задание",
-                        value: this.state.inputValue,
-                    },
-                    null,
-                    {
-                        input: this.onAddInputChange,
-                    }
-                ),
-
-                createElement(
-                    "button", { id: "add-btn" },
-                    "+", { click: this.onAddTask, }
-                ),
-            ]),
+            new AddTask(this.onAddTask).getDomNode(),
 
             createElement(
                 "ul",
                 { id: "todos" },
                 this.state.todos.map((todo) =>
-                    createElement("li", { "data-id": todo.id }, [
-                        createElement("input", {
-                            type: "checkbox",
-                            checked: todo.done,
-                        }),
-                        createElement("label", {}, todo.text),
-                        createElement("button", {}, 
-                            "🗑️", { click: () => this.onDeleteTask(todo.id),}),
-                    ])
+                    new Task(
+                        todo,
+                        this.onDeleteTask,
+                        this.onToggleTask
+                    ).getDomNode()
                 )
             ),
         ]);
