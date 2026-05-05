@@ -96,6 +96,13 @@ class TodoList extends Component {
             inputValue: "",
         });
     }
+    onDeleteTask(id) {
+        const updatedTodos = this.state.todos.filter(
+            (todo) => todo.id !== id
+        );
+
+        this.setState({ todos: updatedTodos });
+    }
 
     render() {
         return createElement("div", { class: "todo-list" }, [
@@ -131,7 +138,8 @@ class TodoList extends Component {
                             checked: todo.done,
                         }),
                         createElement("label", {}, todo.text),
-                        createElement("button", {}, "🗑️"),
+                        createElement("button", {}, 
+                            "🗑️", { click: () => this.onDeleteTask(todo.id),}),
                     ])
                 )
             ),
