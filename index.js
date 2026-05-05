@@ -181,16 +181,27 @@ class TodoList extends Component {
     constructor() {
         super();
 
-        this.state = {
-            todos: [
-                { id: 1, text: "Сделать домашку", done: false },
-                { id: 2, text: "Сделать практику", done: false },
-            ],
-        };
+        const saved = localStorage.getItem("todoState");
+        if (saved) {
+            this.state = JSON.parse(saved);
+        } else {
+            this.state = {
+                todos: [
+                    { id: 1, text: "Сделать домашку", done: false },
+                    { id: 2, text: "Сделать практику", done: false },
+                ],
+            };
+        }
 
         this.onAddTask = this.onAddTask.bind(this);
         this.onDeleteTask = this.onDeleteTask.bind(this);
         this.onToggleTask = this.onToggleTask.bind(this);
+    }
+
+    setState(newState) {
+        this.state = { ...this.state, ...newState };
+        localStorage.setItem("todoState", JSON.stringify(this.state));
+        this.update();
     }
 
     onAddTask(text) {
