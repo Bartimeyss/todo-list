@@ -65,16 +65,27 @@ class TodoList extends Component {
     constructor() {
         super();
 
-        this.state = {
-            todos: [
-                { id: 1, text: "Сделать домашку", done: false },
-                { id: 2, text: "Сделать практику", done: false },
-            ],
-            inputValue: "",
-        };
+        const saved = localStorage.getItem("todoState");
+        if (saved) {
+            this.state = JSON.parse(saved);
+        } else {
+            this.state = {
+                todos: [
+                    { id: 1, text: "Сделать домашку", done: false },
+                    { id: 2, text: "Сделать практику", done: false },
+                ],
+                inputValue: "",
+            };
+        }
 
         this.onAddTask = this.onAddTask.bind(this);
         this.onAddInputChange = this.onAddInputChange.bind(this);
+    }
+
+    setState(newState) {
+        this.state = { ...this.state, ...newState };
+        localStorage.setItem("todoState", JSON.stringify(this.state));
+        this.update();
     }
 
     onAddInputChange(e) {
