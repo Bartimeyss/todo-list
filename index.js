@@ -36,6 +36,7 @@
     return element;
 }
 
+
 class Component {
     getDomNode() {
         if (!this._domNode) {
@@ -44,12 +45,19 @@ class Component {
         return this._domNode;
     }
 
+    update() {
+        const newNode = this.render();
+
+        if (this._domNode && this._domNode.parentNode) {
+            this._domNode.parentNode.replaceChild(newNode, this._domNode);
+        }
+
+        this._domNode = newNode;
+    }
+
     setState(newState) {
         this.state = { ...this.state, ...newState };
-
-        const newNode = this.render();
-        this._domNode.replaceWith(newNode);
-        this._domNode = newNode;
+        this.update();
     }
 }
 
