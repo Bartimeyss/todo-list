@@ -59,6 +59,11 @@ class Component {
         this.state = { ...this.state, ...newState };
         this.update();
     }
+
+    setProps(newProps) {
+        Object.assign(this, newProps);
+        this.update();
+    }
 }
 
 class AddTask extends Component {
@@ -196,6 +201,9 @@ class TodoList extends Component {
         this.onAddTask = this.onAddTask.bind(this);
         this.onDeleteTask = this.onDeleteTask.bind(this);
         this.onToggleTask = this.onToggleTask.bind(this);
+
+        this._addTask = new AddTask(this.onAddTask);
+        this._taskComponents = new Map();
     }
 
     setState(newState) {
@@ -217,6 +225,8 @@ class TodoList extends Component {
     }
 
     onDeleteTask(id) {
+        this._taskComponents.delete(id);
+
         const updatedTodos = this.state.todos.filter(
             (todo) => todo.id !== id
         );
@@ -237,25 +247,37 @@ class TodoList extends Component {
         this.setState({ todos: updatedTodos });
     }
 
+    _getTaskComponent(todo) {
+        if (this._taskComponents.has(todo.id)) {
+            const existing = this._taskComponents.get(todo.id);
+            existing.todo = todo;
+            existing.update();
+            return existing;
+        }
+
+        const task = new Task(todo, this.onDeleteTask, this.onToggleTask);
+        this._taskComponents.set(todo.id, task);
+        return task;
+    }
+
     render() {
+        this._addTask.update();
+
         return createElement("div", { class: "todo-list" }, [
             createElement("h1", {}, "TODO List"),
-            new AddTask(this.onAddTask).getDomNode(),
+            this._addTask.getDomNode(),
 
             createElement(
                 "ul",
                 { id: "todos" },
                 this.state.todos.map((todo) =>
-                    new Task(
-                        todo,
-                        this.onDeleteTask,
-                        this.onToggleTask
-                    ).getDomNode()
+                    this._getTaskComponent(todo).getDomNode()
                 )
             ),
         ]);
     }
 }
+
 document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(new TodoList().getDomNode());
 });
